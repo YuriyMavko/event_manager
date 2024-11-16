@@ -37,32 +37,30 @@ class RunProgram:
                     num = 0
                     event_logic = Event()
                     event_interface = EventInterface(event_logic)
-
+                    path = "data/" + username
                     while num != 6:
-                        print("Enter 1 to add an event")
-                        print("Enter 2 to display events")
-                        print("Enter 3 to edit events")
-                        print("Enter 4 to delete events")
-                        print("Enter 5 to log out of your account")
-                        print("Enter 6 to close the program")
-                        num = int(input())
-                        path = "data/" + username
 
-                        if num == 1:
-                            event_interface.add_event_interface(path)
-                        elif num == 2:
-                            event_interface.display_event_interface(path)
-                        elif num == 3:
-                            event_interface.update_event_interface(path)
-                        elif num == 4:
-                            event_interface.delete_event_interface(path)
-                        elif num == 5:
-                            ui.logout()
-                            num = 10
-                            print(f"Logged out of {username}'s account.")
-                            break
-                        elif num == 6:
-                            print("End of program execution. Thank you!")
-                            exit()
+                        options = {
+                            1: ("Enter 1 to add an event", lambda path: event_interface.add_event_interface(path)),
+                            2: ("Enter 2 to display events", lambda path: event_interface.display_event_interface(path)),
+                            3: ("Enter 3 to edit events", lambda path: event_interface.update_event_interface(path)),
+                            4: ("Enter 4 to delete events", lambda path: event_interface.delete_event_interface(path)),
+                            5: ("Enter 5 to log out of your account", lambda _: ui.logout()),
+                            6: ("Enter 6 to close the program", lambda _: exit())
+                        }
+
+                        for option in options.values():
+                            print(option[0])
+                        num = int(input("Select an option: "))
+
+                        if num in options:
+                            result = options[num][1](path)
+                            if result:
+                                break
+                            if num == 5:
+                                break
+                        else:
+                            print("Invalid selection. Please try again.")
+
         except KeyboardInterrupt:
             print("The program has been stopped!")
