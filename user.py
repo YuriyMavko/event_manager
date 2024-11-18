@@ -1,12 +1,14 @@
+from file_manager import FileManager
 import os
 from generate import PasswordGenerator
 import re
 
 
 class User(PasswordGenerator):
-    def __init__(self):
+    def __init__(self, file_manager):
         self.username = ""
         self.password = ""
+        self.file_manager = file_manager
 
     def authenticate(self, email):
         email_regex = re.compile(r"[A-Za-z]+[\. A-Za-z0-9 _-]*[A-Za-z0-9]+@[A-Za-z]+\.[A-Za-z]+")
@@ -24,13 +26,9 @@ class User(PasswordGenerator):
                     return "Password length must be at least 8."
                 self.password = self.generate_password(password_length)
 
-            if not os.path.exists('logins'):
-                os.makedirs('logins')
-
-            path = 'logins/' + self.username + ".txt"
-            if not os.path.exists(path):
-                with open(path, 'w') as file:
-                    file.write(self.password)
+            path = os.path.join('logins', f"{self.username}.txt")
+            if FileManager.read_file(path) is None:
+                FileManager.write_file(path, self.password)
                 return f"User {self.username} successfully registered with password: {self.password}"
             else:
                 return f"The user {self.username} already exists."
@@ -40,44 +38,31 @@ class User(PasswordGenerator):
     def login_user(self, username, password):
         self.username = username
         self.password = password
-        path = "logins/" + self.username + ".txt"
+        path = os.path.join("logins", f"{self.username}.txt")
 
-        if os.path.exists(path):
-            with open(path, 'r') as file:
-                stored_password = file.read().strip()
-                if stored_password == self.password:
-                    with open('temp.txt', 'w') as file:
-                        file.write(f"{username}\n{password}")
-                    return "Login successful."
-                else:
-                    return "Incorrect password."
+        stored_password = FileManager.read_file(path)
+        if stored_password is not None:
+            if stored_password.strip() == self.password:
+                FileManager.write_file("temp.txt", f"{username}\n{password}")
+                return "Login successful."
+            else:
+                return "Incorrect password."
         else:
             return "Username not found."
 
     def logout_user(self):
-        with open('temp.txt', 'w') as file:
-            file.truncate(0)
+        self.file_manager.write_file("temp.txt","" , mode='w')
         return "User logged out successfully."
 
     def read_temp_file(self):
-        try:
-            with open("temp.txt", "r") as f:
-                lines = f.readlines()
-                if len(lines) >= 2:
-                    username = lines[0].strip()
-                    password = lines[1].strip()
-                    return username, password
-        except FileNotFoundError:
-            pass
+        lines = FileManager.read_lines("temp.txt")
+        if len(lines) >= 2:
+            username = lines[0].strip()
+            password = lines[1].strip()
+            return username, password
         return None, None
 
     def check_login(self, username, password):
-        login_file_path = os.path.join("logins", f"{username}.txt")
-        if os.path.exists(login_file_path):
-            try:
-                with open(login_file_path, "r") as f:
-                    stored_password = f.readline().strip()
-                    return password == stored_password
-            except FileNotFoundError:
-                pass
-        return False
+        path = os.path.join("logins", f"{username}.txt")
+        stored_password = FileManager.read_file(path)
+        return stored_password is not None and stored_password.strip() == password
