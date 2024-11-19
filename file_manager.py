@@ -16,7 +16,7 @@ class FileManager:
     @staticmethod
     def write_file(file_path, content, mode='w'):
         directory = os.path.dirname(file_path)
-        if directory:  # Check if directory exists in path
+        if directory:
             os.makedirs(directory, exist_ok=True)
         with open(file_path, mode, encoding='utf-8') as file:
             if isinstance(content, dict):
@@ -33,7 +33,10 @@ class FileManager:
     def read_json(file_path):
         if os.path.exists(file_path):
             with open(file_path, 'r', encoding='utf-8') as file:
-                return json.load(file)
+                try:
+                    return json.load(file)
+                except json.JSONDecodeError:
+                    return None
         return None
 
     @staticmethod
@@ -64,3 +67,13 @@ class FileManager:
     @staticmethod
     def file_exists(file_path):
         return os.path.exists(file_path)
+
+    @staticmethod
+    def move_file(old_file_path, new_file_path):
+        if os.path.exists(old_file_path):
+            os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+            os.rename(old_file_path, new_file_path)
+        else:
+            raise FileNotFoundError(f"File {old_file_path} not found for moving.")
+
+

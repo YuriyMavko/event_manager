@@ -7,11 +7,11 @@ from file_manager import FileManager
 
 class RunProgram:
     def __init__(self):
-        self.file_manager = FileManager()  # Ініціалізація FileManager
-        self.user = User(file_manager=self.file_manager)  # Передаємо FileManager у User
-        self.ui = UserInterface(self.user)  # Ініціалізація UserInterface
-        self.event_logic = Event(file_manager=self.file_manager)  # Передаємо FileManager у Event
-        self.event_interface = EventInterface(self.event_logic)  # EventInterface
+        self.file_manager = FileManager()
+        self.user = User(file_manager=self.file_manager)
+        self.ui = UserInterface(self.user)
+        self.event_logic = Event(file_manager=self.file_manager)
+        self.event_interface = EventInterface(self.event_logic)
 
     def run_program(self):
         try:
@@ -27,11 +27,21 @@ class RunProgram:
                         if choice.lower() == "reg":
                             self.ui.register()
                         elif choice.lower() == "log":
-                            self.ui.login()
-                            username, password = self.user.read_temp_file()
-                            if self.user.check_login(username, password):
-                                print(f"Successfully logged in as {username}.")
-                                is_authenticated = True
+                            login_attempts = 0
+                            while login_attempts < 3 and not is_authenticated:
+                                self.ui.login()
+                                username, password = self.user.read_temp_file()
+                                if self.user.check_login(username, password):
+                                    print(f"Successfully logged in as {username}.")
+                                    is_authenticated = True
+                                else:
+                                    login_attempts += 1
+                                    remaining_attempts = 3 - login_attempts
+                                    if remaining_attempts > 0:
+                                        print(f"Invalid credentials. {remaining_attempts} attempts remaining.")
+                                    else:
+                                        print("Maximum login attempts reached.")
+                                        break
                         else:
                             print("End of program execution.")
                             exit()
@@ -55,10 +65,10 @@ class RunProgram:
                         choice = int(input("Select an option: "))
                         if choice in options:
                             action = options[choice][1]
-                            if choice == 5:  # Log out
+                            if choice == 5:
                                 action()
                                 is_authenticated = False
-                            elif choice == 6:  # Exit
+                            elif choice == 6:
                                 action()
                             else:
                                 action()
